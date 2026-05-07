@@ -91,8 +91,7 @@ export function RadioMode() {
     }
   }, [])
 
-  const openQQ = async (track: RadioTrack) => {
-    const qqWindow = window.open('about:blank', '_blank')
+  const playInAppleMusic = async (track: RadioTrack) => {
     try {
       const res = await fetch('/api/player/play', {
         method: 'POST',
@@ -100,21 +99,17 @@ export function RadioMode() {
         body: JSON.stringify({ song_id: track.song.id }),
       })
       const data = await res.json()
-      const openUrl = data.open_url || data.url || track.play.open_url
-      if (data.action === 'open_url' || track.song.id <= 0) {
-        if (qqWindow) qqWindow.location.href = openUrl
-        else window.open(openUrl, '_blank', 'noopener,noreferrer')
-        setNotice(`已打开 QQ 音乐：${track.song.title}`)
-      } else if (data.url) {
-        qqWindow?.close()
+      if (data.action === 'apple_music_play') {
         setCurrentSong(track.song)
-        setAudioUrl(data.url)
+        setAudioUrl(null)
         setPlaying(true)
+        setNotice(`Apple Music 正在播放：${data.song?.title || track.song.title}`)
+      } else {
+        setNotice(data.error || 'Apple Music 没有找到这首歌')
       }
       sendFeedback(track.song.id, 'play_complete', 'radio_play')
     } catch {
-      qqWindow?.close()
-      setNotice('打开播放失败')
+      setNotice('Apple Music 播放失败，请检查 Music.app 自动化权限')
     }
   }
 
@@ -218,7 +213,7 @@ export function RadioMode() {
                 <i style={{ width: pct(novelty) }} />
               </label>
               <div className="mt-4 text-xs leading-relaxed" style={{ color: 'var(--color-text-tertiary)' }}>
-                转场策略：Sigmoid ducking，800ms 降到 15%，DJ 后 1500ms 回升。当前版本先生成状态与队列，后续接本地播放器控制。
+                转场策略：Sigmoid ducking，800ms 降到 15%，DJ 后 1500ms 回升。播放由后端控制本机 Music.app。
               </div>
             </div>
           </div>
@@ -247,8 +242,8 @@ export function RadioMode() {
                       {current.segue}
                     </div>
                     <div className="flex flex-wrap gap-2 mt-5">
-                      <button className="radio-primary" onClick={() => openQQ(current)}>
-                        QQ 音乐播放
+                      <button className="radio-primary" onClick={() => playInAppleMusic(current)}>
+                        后台播放
                       </button>
                       <button className="radio-secondary" onClick={() => feedback(current.song, 'more_like_this')}>
                         更像这个

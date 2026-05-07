@@ -47,7 +47,7 @@ export interface RadioTrack extends Recommendation {
   segue: string
   play: {
     provider: string
-    open_url: string
+    open_url?: string
   }
 }
 

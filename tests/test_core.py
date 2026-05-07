@@ -8,6 +8,7 @@ from melodia.pipeline.external_discovery import ITunesDiscovery, external_song_i
 from melodia.pipeline.csv_importer import import_csv_playlists
 from melodia.pipeline.qq_music import qq_music_search_url
 from melodia.pipeline.qq_importer import import_qq_playlist, parse_qq_playlist
+from melodia.system.apple_music import applescript_string
 
 
 def test_parse_qq_playlist_deduplicates_tracks():
@@ -136,3 +137,7 @@ def test_qq_music_search_url_uses_title_and_artist():
     assert url.startswith("https://y.qq.com/n/ryqq/search?w=")
     assert "%E6%99%B4%E5%A4%A9" in url
     assert "%E5%91%A8%E6%9D%B0%E4%BC%A6" in url
+
+
+def test_applescript_string_escapes_quotes_and_backslashes():
+    assert applescript_string('A "quoted" song \\ demo') == '"A \\"quoted\\" song \\\\ demo"'

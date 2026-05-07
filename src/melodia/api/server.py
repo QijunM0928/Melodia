@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from ..config import load_config, MelodiaConfig
 from ..models.store import Store
 from ..models.song import Song, Feedback
-from ..pipeline.qq_music import qq_music_search_url
+from ..system.apple_music import AppleMusicController
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ _vector_store = None
 _tool_executor = None
 _feedback_processor = None
 _itunes_discovery = None
+_apple_music_controller = None
 _config: Optional[MelodiaConfig] = None
 _agent = None
 
@@ -121,6 +122,13 @@ def _get_agent():
         config = _get_config()
         _agent = Agent(config, _get_store(), _get_tool_executor())
     return _agent
+
+
+def _get_apple_music_controller():
+    global _apple_music_controller
+    if _apple_music_controller is None:
+        _apple_music_controller = AppleMusicController()
+    return _apple_music_controller
 
 
 def _song_payload(song: Song) -> dict:
@@ -262,8 +270,7 @@ async def _radio_session(request: RadioSessionRequest) -> dict:
             "position": index + 1,
             "segue": _segue_script(previous_song, song, next_song, style),
             "play": {
-                "provider": "qqmusic",
-                "open_url": qq_music_search_url(song),
+                "provider": "apple_music",
             },
         })
 
@@ -304,7 +311,7 @@ async def _external_recommendations(message: str, limit: int = 2) -> list[dict]:
             song,
             reason=(
                 "iTunes 外部发现：不在当前歌单里，可先试听/查信息，"
-                "完整播放交给 QQ 音乐搜索。"
+                "播放会优先交给本机 Apple Music 资料库。"
             ),
             confidence=max(0.48, 0.62 - index * 0.04),
         )
@@ -408,7 +415,7 @@ async def _discovery_feed(query: str = "") -> dict:
             {
                 "id": "fresh",
                 "title": "新歌探索",
-                "subtitle": "来自 iTunes 的歌单外候选，点击交给 QQ 音乐搜索",
+                "subtitle": "来自 iTunes 的歌单外候选，播放交给本机 Apple Music",
                 "intent": "fresh",
                 "recommendations": [
                     _recommendation_card(
@@ -489,7 +496,7 @@ async def _fast_recommendations(message: str, limit: int = 5) -> Optional[dict]:
         if rec["song"]["id"] < 0 and "iTunes" in rec["song"].get("tags", [])
     )
     if external_count == len(recommendations):
-        response = "我这次主要从外部候选池扩展了几首新歌；这些不是你当前歌单里的歌，播放建议先用 QQ 音乐搜索。"
+        response = "我这次主要从外部候选池扩展了几首新歌；如果它们已在你的 Apple Music 资料库里，就可以直接后台播放。"
     elif external_count:
         response = "我先给 3 首本地高置信匹配，再追加几首 iTunes 外部发现，方便你听到没在当前歌单里的东西。"
     else:
@@ -581,43 +588,46 @@ def create_app() -> FastAPI:
     async def play_song(request: PlayRequest):
         store = _get_store()
         song = store.get_song(request.song_id)
-        if request.song_id <= 0:
+        if not song:
             return {
-                "action": "open_url",
-                "provider": "qqmusic",
-                "url": qq_music_search_url(song) if song else "https://y.qq.com/",
-                "open_url": qq_music_search_url(song) if song else "https://y.qq.com/",
-                "message": "Opening QQ Music search. Playback is handled by QQ Music.",
-                "song": _song_payload(song) if song else {"id": request.song_id},
+                "error": "Song not found in Melodia library.",
+                "code": "song_not_found",
             }
 
-        from ..pipeline.netease_client import NeteaseClient
-        config = _get_config()
-        client = NeteaseClient(config.netease)
-        result = await client.song_url(request.song_id)
-        url_data = result.get("data", [{}])
-        await client.aclose()
-        if url_data and url_data[0].get("url"):
+        result = _get_apple_music_controller().play_song(song)
+        if result.ok:
             return {
-                "url": url_data[0]["url"],
+                "action": "apple_music_play",
+                "provider": "apple_music",
+                "message": result.message,
                 "song": {
                     "id": request.song_id,
-                    "title": song.title if song else "",
-                    "artist": song.artist if song else "",
-                    "album": song.album if song else "",
-                    "duration_ms": song.duration_ms if song else 0,
+                    "title": result.title or song.title,
+                    "artist": result.artist or song.artist,
+                    "album": result.album or song.album,
+                    "duration_ms": song.duration_ms,
                 },
             }
-        if song:
-            return {
-                "action": "open_url",
-                "provider": "qqmusic",
-                "url": qq_music_search_url(song),
-                "open_url": qq_music_search_url(song),
-                "message": "Netease playback is unavailable. Opening QQ Music search instead.",
-                "song": _song_payload(song),
-            }
-        return {"error": "No playback URL available"}
+        return {
+            "error": result.message,
+            "code": result.code,
+            "provider": "apple_music",
+            "song": _song_payload(song),
+        }
+
+    @app.get("/api/player/apple-music/current")
+    async def current_apple_music_track():
+        result = _get_apple_music_controller().current_track()
+        return {
+            "ok": result.ok,
+            "code": result.code,
+            "message": result.message,
+            "song": {
+                "title": result.title,
+                "artist": result.artist,
+                "album": result.album,
+            },
+        }
 
     # --- Feedback ---
 

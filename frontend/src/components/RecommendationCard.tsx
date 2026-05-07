@@ -10,7 +10,6 @@ export function RecommendationCard({ rec, onPlay, onDeepDive }: Props) {
   const sendFeedback = useAppStore((s) => s.sendFeedback)
   const addToQueue = useAppStore((s) => s.addToQueue)
   const isExternal = rec.song.tags?.includes('iTunes') ?? false
-  const opensQQ = rec.song.id <= 0
 
   return (
     <div
@@ -154,12 +153,12 @@ export function RecommendationCard({ rec, onPlay, onDeepDive }: Props) {
             color: 'var(--color-text-accent)',
             cursor: 'pointer',
           }}
-          title={opensQQ ? '用 QQ 音乐搜索并播放' : '播放'}
+          title="用 Apple Music 播放"
         >
           <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
-          {opensQQ ? 'QQ音乐' : '播放'}
+          Apple Music
         </button>
 
         {/* Add to queue */}

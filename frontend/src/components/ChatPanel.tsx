@@ -69,7 +69,6 @@ export function ChatPanel() {
   }
 
   const handlePlay = async (song: Song) => {
-    const qqWindow = song.id <= 0 ? window.open('about:blank', '_blank') : null
     try {
       const res = await fetch('/api/player/play', {
         method: 'POST',
@@ -77,40 +76,31 @@ export function ChatPanel() {
         body: JSON.stringify({ song_id: song.id }),
       })
       const data = await res.json()
-      const openUrl = data.open_url || data.url
-      if (data.action === 'open_url' && openUrl) {
-        if (qqWindow) {
-          qqWindow.location.href = openUrl
-        } else {
-          window.open(openUrl, '_blank', 'noopener,noreferrer')
-        }
-        addMessage({
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: `已打开 QQ 音乐搜索：${song.title} - ${song.artist}`,
-          timestamp: 0,
-        })
-      } else if (data.url) {
+      if (data.action === 'apple_music_play') {
         setCurrentSong(song)
-        setAudioUrl(data.url)
+        setAudioUrl(null)
         setPlaying(true)
         sendFeedback(song.id, 'play_complete')
-      } else {
-        qqWindow?.close()
         addMessage({
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: data.error || '这首歌暂时不能播放，需要先完成网易云匹配',
+          content: `Apple Music 正在播放：${data.song?.title || song.title}`,
+          timestamp: 0,
+        })
+      } else {
+        addMessage({
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: data.error || 'Apple Music 没有找到这首歌',
           timestamp: 0,
         })
       }
     } catch {
-      qqWindow?.close()
       setPlaying(false)
       addMessage({
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: '播放失败，请检查后端服务',
+        content: 'Apple Music 播放失败，请检查 Music.app 自动化权限',
         timestamp: 0,
       })
     }

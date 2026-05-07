@@ -72,7 +72,6 @@ export function DiscoveryView() {
   }, [])
 
   const handlePlay = async (song: Song) => {
-    const qqWindow = song.id <= 0 ? window.open('about:blank', '_blank') : null
     try {
       const res = await fetch('/api/player/play', {
         method: 'POST',
@@ -80,24 +79,17 @@ export function DiscoveryView() {
         body: JSON.stringify({ song_id: song.id }),
       })
       const data = await res.json()
-      const openUrl = data.open_url || data.url
-      if (data.action === 'open_url' && openUrl) {
-        if (qqWindow) qqWindow.location.href = openUrl
-        else window.open(openUrl, '_blank', 'noopener,noreferrer')
-        setNotice(`已打开 QQ 音乐搜索：${song.title} - ${song.artist}`)
-      } else if (data.url) {
-        qqWindow?.close()
+      if (data.action === 'apple_music_play') {
         setCurrentSong(song)
-        setAudioUrl(data.url)
+        setAudioUrl(null)
         setPlaying(true)
         sendFeedback(song.id, 'play_complete')
+        setNotice(`Apple Music 正在播放：${data.song?.title || song.title}`)
       } else {
-        qqWindow?.close()
-        setNotice(data.error || '这首歌暂时不能播放')
+        setNotice(data.error || 'Apple Music 没有找到这首歌')
       }
     } catch {
-      qqWindow?.close()
-      setNotice('播放失败，请检查后端服务')
+      setNotice('Apple Music 播放失败，请检查 Music.app 自动化权限')
     }
   }
 
