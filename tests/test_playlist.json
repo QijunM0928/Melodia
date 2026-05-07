@@ -1,0 +1,212 @@
+[
+  {
+    "title": "晴天",
+    "singer": "周杰伦",
+    "album": "叶惠美",
+    "id": "1001",
+    "duration": 269
+  },
+  {
+    "title": "夜曲",
+    "singer": "周杰伦",
+    "album": "十一月的萧邦",
+    "id": "1002",
+    "duration": 225
+  },
+  {
+    "title": "红豆",
+    "singer": "王菲",
+    "album": "唱游",
+    "id": "1003",
+    "duration": 284
+  },
+  {
+    "title": "匆匆那年",
+    "singer": "王菲",
+    "album": "匆匆那年",
+    "id": "1004",
+    "duration": 253
+  },
+  {
+    "title": "平凡之路",
+    "singer": "朴树",
+    "album": "猎户星座",
+    "id": "1005",
+    "duration": 283
+  },
+  {
+    "title": "那些花儿",
+    "singer": "朴树",
+    "album": "我去2000年",
+    "id": "1006",
+    "duration": 322
+  },
+  {
+    "title": "海阔天空",
+    "singer": "Beyond",
+    "album": "乐与怒",
+    "id": "1007",
+    "duration": 326
+  },
+  {
+    "title": "光辉岁月",
+    "singer": "Beyond",
+    "album": "命运派对",
+    "id": "1008",
+    "duration": 296
+  },
+  {
+    "title": "后来",
+    "singer": "刘若英",
+    "album": "我等你",
+    "id": "1009",
+    "duration": 338
+  },
+  {
+    "title": "成全",
+    "singer": "林宥嘉",
+    "album": "今日营业中",
+    "id": "1010",
+    "duration": 275
+  },
+  {
+    "title": "小幸运",
+    "singer": "田馥甄",
+    "album": "我的少女时代",
+    "id": "1011",
+    "duration": 273
+  },
+  {
+    "title": "寂寞寂寞就好",
+    "singer": "田馥甄",
+    "album": "To Hebe",
+    "id": "1012",
+    "duration": 254
+  },
+  {
+    "title": "起风了",
+    "singer": "买辣椒也用券",
+    "album": "起风了",
+    "id": "1013",
+    "duration": 325
+  },
+  {
+    "title": "漠河舞厅",
+    "singer": "柳爽",
+    "album": "漠河舞厅",
+    "id": "1014",
+    "duration": 286
+  },
+  {
+    "title": "孤勇者",
+    "singer": "陈奕迅",
+    "album": "孤勇者",
+    "id": "1015",
+    "duration": 262
+  },
+  {
+    "title": "十年",
+    "singer": "陈奕迅",
+    "album": "黑白灰",
+    "id": "1016",
+    "duration": 207
+  },
+  {
+    "title": "富士山下",
+    "singer": "陈奕迅",
+    "album": "What's Going On...?",
+    "id": "1017",
+    "duration": 244
+  },
+  {
+    "title": "成都",
+    "singer": "赵雷",
+    "album": "无法长大",
+    "id": "1018",
+    "duration": 328
+  },
+  {
+    "title": "南山南",
+    "singer": "马頔",
+    "album": "孤岛",
+    "id": "1019",
+    "duration": 326
+  },
+  {
+    "title": "安河桥",
+    "singer": "宋冬野",
+    "album": "安和桥北",
+    "id": "1020",
+    "duration": 312
+  },
+  {
+    "title": "莉莉安",
+    "singer": "宋冬野",
+    "album": "安和桥北",
+    "id": "1021",
+    "duration": 268
+  },
+  {
+    "title": "斑马斑马",
+    "singer": "宋冬野",
+    "album": "安和桥北",
+    "id": "1022",
+    "duration": 267
+  },
+  {
+    "title": "像风一样",
+    "singer": "薛之谦",
+    "album": "渡",
+    "id": "1023",
+    "duration": 254
+  },
+  {
+    "title": "演员",
+    "singer": "薛之谦",
+    "album": "绅士",
+    "id": "1024",
+    "duration": 270
+  },
+  {
+    "title": "漂洋过海来看你",
+    "singer": "刘明湘",
+    "album": "漂洋过海来看你",
+    "id": "1025",
+    "duration": 276
+  },
+  {
+    "title": "Hotel California",
+    "singer": "Eagles",
+    "album": "Hotel California",
+    "id": "1026",
+    "duration": 391
+  },
+  {
+    "title": "Bohemian Rhapsody",
+    "singer": "Queen",
+    "album": "A Night at the Opera",
+    "id": "1027",
+    "duration": 355
+  },
+  {
+    "title": "Imagine",
+    "singer": "John Lennon",
+    "album": "Imagine",
+    "id": "1028",
+    "duration": 187
+  },
+  {
+    "title": "Creep",
+    "singer": "Radiohead",
+    "album": "Pablo Honey",
+    "id": "1029",
+    "duration": 238
+  },
+  {
+    "title": "Wish You Were Here",
+    "singer": "Pink Floyd",
+    "album": "Wish You Were Here",
+    "id": "1030",
+    "duration": 328
+  }
+]
