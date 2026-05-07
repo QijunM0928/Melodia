@@ -42,6 +42,33 @@ export interface DiscoveryFeed {
   sections: DiscoverySection[]
 }
 
+export interface RadioTrack extends Recommendation {
+  position: number
+  segue: string
+  play: {
+    provider: string
+    open_url: string
+  }
+}
+
+export interface RadioSession {
+  style: string
+  mood: string
+  energy: number
+  novelty: number
+  voice: string
+  state: string
+  ducking: {
+    curve: string
+    fade_down_ms: number
+    background_volume: number
+    fade_up_ms: number
+  }
+  current: RadioTrack | null
+  upcoming: RadioTrack | null
+  queue: RadioTrack[]
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'

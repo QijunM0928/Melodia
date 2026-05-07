@@ -40,6 +40,15 @@ class DiscoveryRequest(BaseModel):
     query: str = ""
 
 
+class RadioSessionRequest(BaseModel):
+    style: str = ""
+    mood: str = "深夜"
+    energy: int = 45
+    novelty: int = 45
+    voice: str = "克制、知性、像深夜电台"
+    length: int = 12
+
+
 # Lazy-initialized singletons
 _store: Optional[Store] = None
 _vector_store = None
@@ -164,6 +173,120 @@ def _clean_profile_narrative(text: str) -> str:
     if cleaned.startswith("narrative:"):
         cleaned = cleaned.removeprefix("narrative:").strip()
     return cleaned.strip().strip('"').strip("'")
+
+
+def _segue_script(previous: Song | None, current: Song, next_song: Song | None, style: str) -> str:
+    if previous and next_song:
+        return (
+            f"从 {previous.artist} 的《{previous.title}》到 {next_song.artist} 的《{next_song.title}》，"
+            f"中间留一点空气。它们不一定相似，但都靠近 {style or '此刻的情绪'} 里那种没有说满的部分。"
+        )
+    if next_song:
+        return (
+            f"这一路先从 {current.artist} 的《{current.title}》开始，"
+            f"下一首会把方向轻轻推向 {next_song.artist} 的《{next_song.title}》。"
+        )
+    return f"现在这首是 {current.artist} 的《{current.title}》。先让它把这个频道的温度定下来。"
+
+
+async def _radio_session(request: RadioSessionRequest) -> dict:
+    style = request.style.strip() or f"{request.mood}、可持续收听、不随机"
+    feed = await _discovery_feed(style)
+
+    familiar = feed["sections"][0]["recommendations"] if feed["sections"] else []
+    fresh = feed["sections"][1]["recommendations"] if len(feed["sections"]) > 1 else []
+    edge = feed["sections"][2]["recommendations"] if len(feed["sections"]) > 2 else []
+
+    novelty_ratio = max(0, min(100, request.novelty)) / 100
+    safe_take = max(3, round(request.length * (1 - novelty_ratio)))
+    fresh_take = max(2, request.length - safe_take)
+    if request.energy >= 70:
+        fresh_take += 1
+    if request.energy <= 30:
+        safe_take += 1
+
+    ordered_cards = []
+    ordered_cards.extend(familiar[:safe_take])
+    ordered_cards.extend(fresh[:fresh_take])
+    if request.novelty >= 60:
+        ordered_cards.extend(edge[:2])
+
+    seen = set()
+    queue = []
+    for card in ordered_cards:
+        song_id = card["song"]["id"]
+        if song_id in seen:
+            continue
+        seen.add(song_id)
+        queue.append(card)
+        if len(queue) >= max(4, min(request.length, 20)):
+            break
+
+    # Interleave familiar and fresh tracks so the station feels directed, not like buckets.
+    if len(queue) > 4:
+        safe = [card for card in queue if "iTunes" not in card["song"].get("tags", [])]
+        new = [card for card in queue if "iTunes" in card["song"].get("tags", [])]
+        interleaved = []
+        while safe or new:
+            if safe:
+                interleaved.append(safe.pop(0))
+            if new:
+                interleaved.append(new.pop(0))
+        queue = interleaved[: len(queue)]
+
+    tracks = []
+    for index, card in enumerate(queue):
+        song = Song(
+            title=card["song"]["title"],
+            artist=card["song"]["artist"],
+            album=card["song"].get("album", ""),
+            netease_id=card["song"]["id"],
+            genres=card["song"].get("genres", []),
+            tags=card["song"].get("tags", []),
+            duration_ms=card["song"].get("duration_ms", 0),
+        )
+        previous_song = None
+        if index > 0:
+            prev = queue[index - 1]["song"]
+            previous_song = Song(
+                title=prev["title"], artist=prev["artist"], album=prev.get("album", ""), netease_id=prev["id"],
+            )
+        next_song = None
+        if index + 1 < len(queue):
+            nxt = queue[index + 1]["song"]
+            next_song = Song(
+                title=nxt["title"], artist=nxt["artist"], album=nxt.get("album", ""), netease_id=nxt["id"],
+            )
+        tracks.append({
+            **card,
+            "position": index + 1,
+            "segue": _segue_script(previous_song, song, next_song, style),
+            "play": {
+                "provider": "qqmusic",
+                "open_url": qq_music_search_url(song),
+            },
+        })
+
+    current = tracks[0] if tracks else None
+    upcoming = tracks[1] if len(tracks) > 1 else None
+
+    return {
+        "style": style,
+        "mood": request.mood,
+        "energy": request.energy,
+        "novelty": request.novelty,
+        "voice": request.voice,
+        "state": "ready",
+        "ducking": {
+            "curve": "sigmoid",
+            "fade_down_ms": 800,
+            "background_volume": 15,
+            "fade_up_ms": 1500,
+        },
+        "current": current,
+        "upcoming": upcoming,
+        "queue": tracks,
+    }
 
 
 async def _external_recommendations(message: str, limit: int = 2) -> list[dict]:
@@ -408,6 +531,10 @@ def create_app() -> FastAPI:
     @app.post("/api/discovery/feed")
     async def discovery_feed_post(request: DiscoveryRequest):
         return await _discovery_feed(request.query)
+
+    @app.post("/api/radio/session")
+    async def radio_session(request: RadioSessionRequest):
+        return await _radio_session(request)
 
     @app.post("/api/chat")
     async def chat(request: ChatRequest):

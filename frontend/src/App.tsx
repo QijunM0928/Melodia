@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { DiscoveryView } from './components/DiscoveryView'
 import { PlayerPanel } from './components/PlayerPanel'
+import { RadioMode } from './components/RadioMode'
 
 function App() {
+  const [mode, setMode] = useState<'radio' | 'discovery'>('radio')
+
   return (
     <div className="h-screen flex overflow-hidden relative" style={{ background: 'var(--color-bg-deep)' }}>
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
@@ -33,12 +37,35 @@ function App() {
             className="text-xs font-medium tracking-wide uppercase"
             style={{ color: 'var(--color-text-tertiary)' }}
           >
-            Discovery Workspace
+            Custom Radio
           </span>
+          <div className="flex-1" />
+          <div className="flex gap-1">
+            <button
+              onClick={() => setMode('radio')}
+              className="px-3 py-1.5 rounded-lg text-xs"
+              style={{
+                background: mode === 'radio' ? 'var(--color-indigo-light)' : 'rgba(255,255,255,0.04)',
+                color: mode === 'radio' ? 'white' : 'var(--color-text-secondary)',
+              }}
+            >
+              Radio
+            </button>
+            <button
+              onClick={() => setMode('discovery')}
+              className="px-3 py-1.5 rounded-lg text-xs"
+              style={{
+                background: mode === 'discovery' ? 'var(--color-indigo-light)' : 'rgba(255,255,255,0.04)',
+                color: mode === 'discovery' ? 'white' : 'var(--color-text-secondary)',
+              }}
+            >
+              Discover
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 min-h-0">
-          <DiscoveryView />
+          {mode === 'radio' ? <RadioMode /> : <DiscoveryView />}
         </div>
       </div>
 
